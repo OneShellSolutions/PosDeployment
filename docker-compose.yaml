@@ -13,7 +13,7 @@ services:
       - '8090:8090'
     depends_on:
       - mongodb
-      - nats-server
+      # - nats-server
     environment:
       - NATS_URL=${NATS_URL}
       - NATS_REMOTE_URL=nats://178.156.139.110:4222
