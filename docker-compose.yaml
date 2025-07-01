@@ -189,7 +189,7 @@ services:
       - WATCHTOWER_ROLLING_RESTART=true
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./config/config.json:/config.json
+      - /app/repo/config/config.json:/config.json
     command: --interval 20
     deploy:
       resources:
