@@ -20,8 +20,7 @@ services:
       - SPRING_PROFILES_ACTIVE=default
       - MONGODB_URI=${MONGODB_URI}
       - JAVA_OPTS=-Xms3g -Xmx3.5g -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -Xlog:gc*
-    volumes:
-      - ~/data/java/logs:/var/log/posbackend
+    volumes: /Users/manip/data/java/logs:/var/log/posbackend
     deploy:
       resources:
         limits:
@@ -64,8 +63,7 @@ services:
       - mongodb
     environment:
       - NODE_ENV=production
-    volumes:
-      - ~/data/node/logs:/var/log/posNodeBackend
+    volumes: /Users/manip/data/node/logs:/var/log/posNodeBackend
     networks:
       - app-network
     healthcheck:
@@ -116,8 +114,7 @@ services:
     image: mongo:latest
     container_name: mongodb
     restart: always
-    volumes:
-      - ~/data/mongo-data:/data/db
+    volumes: /Users/manip/data/mongo-data:/data/db
     labels:
       - 'com.centurylinklabs.watchtower.enable=false'
     ports:
@@ -154,8 +151,7 @@ services:
       - '4222:4222'
       - '8222:8222'
       - '8080:8080'
-    volumes:
-      - ~/data/nats-data:/data/jetstream
+    volumes: /Users/manip/data/nats-data:/data/jetstream
       - ./nats-server.conf:/nats-server.conf
     command: ['--config', '/nats-server.conf']
     environment:
@@ -209,8 +205,7 @@ services:
       - 'com.centurylinklabs.watchtower.enable=true'
     ports:
       - '5200:5100'
-    volumes:
-      - ~/data:/app/data
+    volumes: /Users/manip/data:/app/data
     networks:
       - app-network
     logging:
