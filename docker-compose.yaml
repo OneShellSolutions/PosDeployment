@@ -65,7 +65,7 @@ services:
     environment:
       - NODE_ENV=production
     volumes:
-      - /Users/manip/data/node/logs:/var/log/posNodeBackend
+      - /app/data/node/logs:/var/log/posNodeBackend
     networks:
       - app-network
     healthcheck:
