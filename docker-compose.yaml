@@ -156,8 +156,8 @@ services:
       - '8080:8080'
     volumes:
       - /app/data/nats-data:/data/jetstream
-      - /app/data/repo/nats-server.conf:/nats-server.conf
-    command: ['--config', '/nats-server.conf']
+      - /app/data/repo/nats:/data/nats
+    command: ['--config', '/data/nats/nats-server.conf']
     environment:
       - JS_STORAGE_TYPE=file
       - JS_STORAGE_DIR=/data/jetstream
