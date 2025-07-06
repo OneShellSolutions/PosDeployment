@@ -122,6 +122,12 @@ services:
       - 'com.centurylinklabs.watchtower.enable=false'
     ports:
       - '27017:27017'
+    command:
+      [
+        'bash',
+        '-c',
+        "mongod --replSet rs0 --bind_ip_all & sleep 5 && mongosh --eval 'try { rs.status(); } catch(e) { rs.initiate(); }' && tail -f /dev/null",
+      ]
     deploy:
       resources:
         limits:

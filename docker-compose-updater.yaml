@@ -1,0 +1,41 @@
+# @format
+
+version: '3.8'
+
+services:
+  compose-updater:
+    image: docker.oneshell.in/library/compose-builder:local
+    container_name: compose-updater
+    restart: always
+    labels:
+      - 'com.centurylinklabs.watchtower.enable=true'
+    ports:
+      - '5001:5000'
+    environment:
+      - GITHUB_REPO=${GITHUB_REPO}
+      - COMPOSE_FILE_PATH=${COMPOSE_FILE_PATH}
+      - REQUIRED_SERVICES=${REQUIRED_SERVICES}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/data/python/logs:/app/logs
+      - ~/data:/app/data
+      - ./config/config.json:/root/.docker/config.json
+    networks:
+      - app-network
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+    deploy:
+      resources:
+        limits:
+          cpus: '0.4'
+          memory: 300M
+        reservations:
+          cpus: '0.2'
+          memory: 64M
+
+networks:
+  app-network:
+    driver: bridge
