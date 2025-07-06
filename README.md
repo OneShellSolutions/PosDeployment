@@ -1,5 +1,3 @@
 <!-- @format -->
 
 # PosDeployment
-
-uyfgd
