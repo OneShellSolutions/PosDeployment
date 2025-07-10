@@ -207,7 +207,7 @@ services:
     networks:
       - app-network
   PosPythonBackend:
-    image: docker.oneshell.in/library/pos-python-backend:latest
+    image: docker.oneshell.in/library/pos-python-backend:local
     container_name: PosPythonBackend
     restart: always
     labels:
