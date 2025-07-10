@@ -122,12 +122,21 @@ services:
       - 'com.centurylinklabs.watchtower.enable=false'
     ports:
       - '27017:27017'
-    command:
-      [
-        'bash',
-        '-c',
-        "mongod --replSet rs0 --bind_ip_all & sleep 5 && mongosh --eval 'try { rs.status(); } catch(e) { rs.initiate(); }' && tail -f /dev/null",
-      ]
+    command: >
+      bash -c "
+        mongod --replSet rs0 --bind_ip_all &
+        until mongosh --eval 'db.adminCommand({ ping: 1 })' >/dev/null 2>&1; do sleep 1; done;
+        mongosh --quiet --eval '
+          const status = rs.status();
+          if (status.ok === 0 || status.codeName === \"NotYetInitialized\") {
+            print(\"Initializing replica set...\");
+            rs.initiate();
+          } else {
+            print(\"Replica set already initialized.\");
+          }
+        ';
+        tail -f /dev/null
+      "
     deploy:
       resources:
         limits:
