@@ -271,38 +271,52 @@ services:
         max-file: '3'
 
   temporal:
-    image: temporalio/auto-setup:1.20.1 # <-- a known-good older tag
+    image: temporalio/auto-setup:1.20.1
     container_name: temporal
     restart: unless-stopped
     environment:
-      - DB=sqlite
+      - DB=sqlite_default
       - SQLITE_PRAGMA_journal_mode=WAL
-
-      # Create default namespace and keep data ONLY 10 days
+      - SQLITE_USER=temporal
+      - SQLITE_PASSWORD=temporal
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+      - ENABLE_ES=false
+      - ES_SEEDS=
+      - ES_VERSION=v7
       - DEFAULT_NAMESPACE=default
-      - DEFAULT_NAMESPACE_RETENTION=10
+      - DEFAULT_NAMESPACE_RETENTION=168h
       - SKIP_DEFAULT_NAMESPACE_CREATION=false
-
-      # No archival beyond retention
-      - TEMPORAL_HISTORY_ARCHIVAL_ENABLED=false
-      - TEMPORAL_VISIBILITY_ARCHIVAL_ENABLED=false
-
-      # Optional tunables (fine to remove)
-      - TEMPORAL_FRONTEND_HISTORY_MAX_PAGE_SIZE=100
-      - TEMPORAL_MATCHING_NUM_TASK_QUEUE_PARTITIONS=4
-      - TEMPORAL_HISTORY_MAX_AUTO_RESET_POINTS=5
-      - TEMPORAL_BLOB_SIZE_LIMIT_ERROR=1048576
-      - TEMPORAL_BLOB_SIZE_LIMIT_WARN=131072
-      - TEMPORAL_WORKER_BUILD_ID_SCAVENGER_ENABLED=true
     ports:
       - '7233:7233'
     volumes:
-      - /app/data/repo/temporal:/tmp/temporal
+      - temporal_data:/etc/temporal/config/dynamicconfig
+      - /app/data/temporal:/tmp/temporal
+    networks:
+      - app-network
+    healthcheck:
+      test: ['CMD', 'tctl', '--address', 'temporal:7233', 'cluster', 'health']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  temporal-ui:
+    image: temporalio/ui:2.10.3
+    container_name: temporal-ui
+    restart: unless-stopped
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    ports:
+      - '8080:8080'
     networks:
       - app-network
 
 volumes:
   temporal_data:
+    driver: local
 
 networks:
   app-network:
