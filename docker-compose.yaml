@@ -271,53 +271,34 @@ services:
         max-file: '3'
 
   temporal:
-    image: ghcr.io/temporalio/temporalite:latest
+    image: temporalio/auto-setup:1.21.0 # try 1.21.0; if DB=sqlite still fails, try 1.20.x
     container_name: temporal
-    command:
-      [
-        'start',
-        '--ip',
-        '0.0.0.0',
-        '--port',
-        '7233',
-        '--namespace',
-        'default',
-        '--retention',
-        '240h',
-        '--ui',
-        '--log-format',
-        'pretty',
-      ]
+    ports:
+      - '7233:7233'
     environment:
-      # Keep only recent data; no archival beyond retention.
+      - DB=sqlite
+      - SQLITE_PRAGMA_journal_mode=WAL
+
+      # Create default namespace with 10-day retention
+      - DEFAULT_NAMESPACE=default
+      - DEFAULT_NAMESPACE_RETENTION=10
+      - SKIP_DEFAULT_NAMESPACE_CREATION=false
+
+      # Keep only recent data (no archival)
       - TEMPORAL_HISTORY_ARCHIVAL_ENABLED=false
       - TEMPORAL_VISIBILITY_ARCHIVAL_ENABLED=false
-      # Optional tuning (safe to keep/remove)
+
+      # (Optional tunables)
       - TEMPORAL_FRONTEND_HISTORY_MAX_PAGE_SIZE=100
       - TEMPORAL_MATCHING_NUM_TASK_QUEUE_PARTITIONS=4
       - TEMPORAL_HISTORY_MAX_AUTO_RESET_POINTS=5
       - TEMPORAL_BLOB_SIZE_LIMIT_ERROR=1048576
       - TEMPORAL_BLOB_SIZE_LIMIT_WARN=131072
       - TEMPORAL_WORKER_BUILD_ID_SCAVENGER_ENABLED=true
-    ports:
-      - '7233:7233' # gRPC API
-      - '8088:8088' # Web UI
     volumes:
-      - /app/data/repo/temporal:/var/lib/temporalite
+      - /app/data/repo/temporal:/tmp/temporal
     networks:
       - app-network
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
-        reservations:
-          cpus: '0.2'
-          memory: 256M
-    logging:
-      driver: 'json-file'
-      options:
-        max-size: '10m'
 
 volumes:
   temporal_data:
