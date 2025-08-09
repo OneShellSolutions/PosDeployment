@@ -274,6 +274,34 @@ services:
       options:
         max-size: '10m'
         max-file: '3'
+
+  temporal:
+    image: temporalio/auto-setup:latest
+    ports:
+      - "7233:7233"
+    environment:
+      - DB=sqlite
+      - TEMPORAL_WEB_ENABLED=true
+      # Retention settings - keep data for 10 days only
+      - TEMPORAL_HISTORY_RETENTION_PERIOD=240h  # 10 days
+      - TEMPORAL_VISIBILITY_RETENTION_PERIOD=240h  # 10 days
+      # Optimize storage and performance
+      - TEMPORAL_HISTORY_ARCHIVAL_ENABLED=false
+      - TEMPORAL_VISIBILITY_ARCHIVAL_ENABLED=false
+      # Reduce memory usage
+      - TEMPORAL_FRONTEND_HISTORY_MAX_PAGE_SIZE=100
+      - TEMPORAL_MATCHING_NUM_TASK_QUEUE_PARTITIONS=4
+    depends_on: []
+  temporal-web:
+    image: temporalio/web:latest
+    ports:
+      - "8088:8088"
+    environment:
+      - TEMPORAL_GRPC_ENDPOINT=temporal:7233
+      - TEMPORAL_PERMIT_WRITE_API=true
+    depends_on:
+      - temporal 
+      
 networks:
   app-network:
     driver: bridge
