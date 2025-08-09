@@ -270,7 +270,6 @@ services:
         max-size: '10m'
         max-file: '3'
 
-  # Temporal using SQLite (lightweight, no additional DB needed)
   temporal:
     image: ghcr.io/temporalio/temporalite:latest
     container_name: temporal
