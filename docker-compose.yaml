@@ -272,7 +272,7 @@ services:
         max-size: '10m'
         max-file: '3'
 
-  # Temporal using SQLite (lightweight, no additional DB needed)
+  # Temporal using SQLite (lightweight, no additional DB needed) 
   temporal:
     image: temporalio/auto-setup:1.24.2
     container_name: temporal
