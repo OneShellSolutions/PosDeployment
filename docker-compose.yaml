@@ -271,24 +271,37 @@ services:
         max-file: '3'
 
   temporal:
-    image: temporalio/auto-setup:1.20.1
+    image: temporalio/server:1.20.1
     container_name: temporal
     restart: unless-stopped
+    command:
+      - temporal-server
+      - --env
+      - development-sqlite
+      - start
     environment:
-      - DB=sqlite
-      - SQLITE_PRAGMA_journal_mode=WAL
-      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
-      - DEFAULT_NAMESPACE=default
-      - DEFAULT_NAMESPACE_RETENTION=168h
-      - SKIP_DEFAULT_NAMESPACE_CREATION=false
+      - TEMPORAL_CLI_ADDRESS=temporal:7233
+      - TEMPORAL_ADDRESS=0.0.0.0:7233
+      - TEMPORAL_GRPC_PORT=7233
+      - TEMPORAL_WEB_PORT=8233
     ports:
       - '7233:7233'
+      - '8233:8233'
     volumes:
       - /app/data/temporal:/tmp/temporal
     networks:
       - app-network
     healthcheck:
-      test: ['CMD', 'temporal-server', '--help']
+      test:
+        [
+          'CMD',
+          'temporal',
+          'operator',
+          'cluster',
+          'health',
+          '--address',
+          'temporal:7233',
+        ]
       interval: 30s
       timeout: 10s
       retries: 5
