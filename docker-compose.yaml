@@ -273,7 +273,8 @@ services:
   temporal:
     image: ghcr.io/temporalio/temporalite:latest
     container_name: temporal
-    command: [
+    command:
+      [
         'start',
         '--ip',
         '0.0.0.0',
@@ -282,7 +283,7 @@ services:
         '--namespace',
         'default',
         '--retention',
-        '240h', # 10 days
+        '240h',
         '--ui',
         '--log-format',
         'pretty',
