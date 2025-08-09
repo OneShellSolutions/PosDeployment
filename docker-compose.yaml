@@ -271,41 +271,49 @@ services:
         max-file: '3'
 
   temporal:
-    image: temporalio/server:1.20.1
+    image: temporalio/auto-setup:1.20.1
     container_name: temporal
     restart: unless-stopped
-    command:
-      - temporal-server
-      - --env
-      - development-sqlite
-      - start
     environment:
-      - TEMPORAL_CLI_ADDRESS=temporal:7233
-      - TEMPORAL_ADDRESS=0.0.0.0:7233
-      - TEMPORAL_GRPC_PORT=7233
-      - TEMPORAL_WEB_PORT=8233
+      - DB=mysql
+      - MYSQL_USER=root
+      - MYSQL_PWD=root
+      - MYSQL_SEEDS=temporal-mysql
+      - DEFAULT_NAMESPACE=default
+      - DEFAULT_NAMESPACE_RETENTION=168h
+      - SKIP_DEFAULT_NAMESPACE_CREATION=false
     ports:
       - '7233:7233'
-      - '8233:8233'
-    volumes:
-      - /app/data/temporal:/tmp/temporal
+    depends_on:
+      - temporal-mysql
     networks:
       - app-network
     healthcheck:
-      test:
-        [
-          'CMD',
-          'temporal',
-          'operator',
-          'cluster',
-          'health',
-          '--address',
-          'temporal:7233',
-        ]
+      test: ['CMD', 'tctl', '--address', 'temporal:7233', 'cluster', 'health']
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 30s
+
+  temporal-mysql:
+    image: mysql:8.0
+    container_name: temporal-mysql
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=temporal
+      - MYSQL_USER=temporal
+      - MYSQL_PASSWORD=temporal
+    volumes:
+      - /app/data/temporal-mysql:/var/lib/mysql
+    networks:
+      - app-network
+    command: --sql-mode="" --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   temporal-ui:
     image: temporalio/ui:2.10.3
