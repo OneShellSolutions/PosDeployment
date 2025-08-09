@@ -1,7 +1,6 @@
 # @format
 
 version: '3.8'
-
 services:
   posbackend:
     image: docker.oneshell.in/library/posbackend:local
@@ -13,12 +12,13 @@ services:
       - '8090:8090'
     depends_on:
       - mongodb
-      # - nats-server
+      - temporal
     environment:
       - NATS_URL=${NATS_URL}
       - NATS_REMOTE_URL=nats://178.156.139.110:4222
       - SPRING_PROFILES_ACTIVE=default
       - MONGODB_URI=${MONGODB_URI}
+      - TEMPORAL_GRPC_ENDPOINT=temporal:7233
       - JAVA_OPTS=-Xms3g -Xmx3.5g -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -Xlog:gc*
     volumes:
       - /app/data/java/logs:/var/log/posbackend
@@ -123,20 +123,16 @@ services:
     ports:
       - '27017:27017'
     command: >
-      bash -c "
-        mongod --replSet rs0 --bind_ip_all &
-        until mongosh --eval 'db.adminCommand({ ping: 1 })' >/dev/null 2>&1; do sleep 1; done;
-        mongosh --quiet --eval '
-          const status = rs.status();
-          if (status.ok === 0 || status.codeName === \"NotYetInitialized\") {
-            print(\"Initializing replica set...\");
-            rs.initiate();
-          } else {
-            print(\"Replica set already initialized.\");
-          }
-        ';
-        tail -f /dev/null
-      "
+      bash -c "mongod --replSet rs0 --bind_ip_all &
+      until mongosh --eval 'db.adminCommand({ ping: 1 })' >/dev/null 2>&1; do sleep 1; done;
+      mongosh --quiet --eval 'const status = rs.status();
+      if (status.ok === 0 || status.codeName === \"NotYetInitialized\") {
+        print(\"Initializing replica set...\");
+        rs.initiate();
+      } else {
+        print(\"Replica set already initialized.\");
+      }';
+      tail -f /dev/null"
     deploy:
       resources:
         limits:
@@ -215,6 +211,7 @@ services:
           memory: 64M
     networks:
       - app-network
+
   PosPythonBackend:
     image: docker.oneshell.in/library/pos-python-backend:local
     container_name: PosPythonBackend
@@ -275,33 +272,72 @@ services:
         max-size: '10m'
         max-file: '3'
 
+  # Temporal using SQLite (lightweight, no additional DB needed)
   temporal:
-    image: temporalio/auto-setup:latest
+    image: temporalio/auto-setup:1.24.2
+    container_name: temporal
     ports:
-      - "7233:7233"
+      - '7233:7233'
     environment:
       - DB=sqlite
-      - TEMPORAL_WEB_ENABLED=true
+      - SQLITE_PRAGMA_journal_mode=WAL
       # Retention settings - keep data for 10 days only
-      - TEMPORAL_HISTORY_RETENTION_PERIOD=240h  # 10 days
-      - TEMPORAL_VISIBILITY_RETENTION_PERIOD=240h  # 10 days
-      # Optimize storage and performance
+      - TEMPORAL_HISTORY_RETENTION_PERIOD=240h
+      - TEMPORAL_VISIBILITY_RETENTION_PERIOD=240h
+      # Disable archival to prevent long-term storage
       - TEMPORAL_HISTORY_ARCHIVAL_ENABLED=false
       - TEMPORAL_VISIBILITY_ARCHIVAL_ENABLED=false
-      # Reduce memory usage
+      # Optimize performance and reduce storage
       - TEMPORAL_FRONTEND_HISTORY_MAX_PAGE_SIZE=100
       - TEMPORAL_MATCHING_NUM_TASK_QUEUE_PARTITIONS=4
-    depends_on: []
+      - TEMPORAL_HISTORY_MAX_AUTO_RESET_POINTS=5
+      # Limit blob sizes to reduce storage
+      - TEMPORAL_BLOB_SIZE_LIMIT_ERROR=1048576
+      - TEMPORAL_BLOB_SIZE_LIMIT_WARN=131072
+      # Worker optimization
+      - TEMPORAL_WORKER_BUILD_ID_SCAVENGER_ENABLED=true
+    volumes:
+      - temporal_data:/tmp/temporal
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.2'
+          memory: 256M
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+
   temporal-web:
-    image: temporalio/web:latest
+    image: temporalio/web:1.18.0
+    container_name: temporal-web
     ports:
-      - "8088:8088"
+      - '8088:8088'
     environment:
       - TEMPORAL_GRPC_ENDPOINT=temporal:7233
       - TEMPORAL_PERMIT_WRITE_API=true
     depends_on:
-      - temporal 
-      
+      - temporal
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+volumes:
+  temporal_data:
+
 networks:
   app-network:
     driver: bridge
