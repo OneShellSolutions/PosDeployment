@@ -308,8 +308,6 @@ services:
     networks:
       - app-network
 
-volumes:
-
 networks:
   app-network:
     driver: bridge
