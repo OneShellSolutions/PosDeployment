@@ -271,53 +271,53 @@ services:
         max-file: '3'
 
   # Temporal using SQLite (lightweight, no additional DB needed)
-temporal:
-  image: temporalio/temporalite:latest
-  container_name: temporal
-  command: [
-      'start',
-      '--ip',
-      '0.0.0.0',
-      '--port',
-      '7233',
-      '--namespace',
-      'default',
-      '--retention',
-      '240h', # 10 days (10 * 24h)
-      '--ui',
-      '--log-format',
-      'pretty',
-    ]
-  environment:
-    # Disable archival so data older than retention is deleted immediately
-    - TEMPORAL_HISTORY_ARCHIVAL_ENABLED=false
-    - TEMPORAL_VISIBILITY_ARCHIVAL_ENABLED=false
-    # Not required for Temporalite, but harmless to keep:
-    - TEMPORAL_FRONTEND_HISTORY_MAX_PAGE_SIZE=100
-    - TEMPORAL_MATCHING_NUM_TASK_QUEUE_PARTITIONS=4
-    - TEMPORAL_HISTORY_MAX_AUTO_RESET_POINTS=5
-    - TEMPORAL_BLOB_SIZE_LIMIT_ERROR=1048576
-    - TEMPORAL_BLOB_SIZE_LIMIT_WARN=131072
-    - TEMPORAL_WORKER_BUILD_ID_SCAVENGER_ENABLED=true
-  ports:
-    - '7233:7233' # gRPC API
-    - '8088:8088' # Web UI
-  volumes:
-    - /app/data/repo/temporal:/var/lib/temporalite
-  networks:
-    - app-network
-  deploy:
-    resources:
-      limits:
-        cpus: '0.5'
-        memory: 512M
-      reservations:
-        cpus: '0.2'
-        memory: 256M
-  logging:
-    driver: 'json-file'
-    options:
-      max-size: '10m'
+  temporal:
+    image: temporalio/temporalite:latest
+    container_name: temporal
+    command: [
+        'start',
+        '--ip',
+        '0.0.0.0',
+        '--port',
+        '7233',
+        '--namespace',
+        'default',
+        '--retention',
+        '240h', # 10 days (10 * 24h)
+        '--ui',
+        '--log-format',
+        'pretty',
+      ]
+    environment:
+      # Disable archival so data older than retention is deleted immediately
+      - TEMPORAL_HISTORY_ARCHIVAL_ENABLED=false
+      - TEMPORAL_VISIBILITY_ARCHIVAL_ENABLED=false
+      # Not required for Temporalite, but harmless to keep:
+      - TEMPORAL_FRONTEND_HISTORY_MAX_PAGE_SIZE=100
+      - TEMPORAL_MATCHING_NUM_TASK_QUEUE_PARTITIONS=4
+      - TEMPORAL_HISTORY_MAX_AUTO_RESET_POINTS=5
+      - TEMPORAL_BLOB_SIZE_LIMIT_ERROR=1048576
+      - TEMPORAL_BLOB_SIZE_LIMIT_WARN=131072
+      - TEMPORAL_WORKER_BUILD_ID_SCAVENGER_ENABLED=true
+    ports:
+      - '7233:7233' # gRPC API
+      - '8088:8088' # Web UI
+    volumes:
+      - /app/data/repo/temporal:/var/lib/temporalite
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.2'
+          memory: 256M
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
 
 volumes:
   temporal_data:
