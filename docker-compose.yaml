@@ -275,26 +275,20 @@ services:
     container_name: temporal
     restart: unless-stopped
     environment:
-      - DB=sqlite_default
+      - DB=sqlite
       - SQLITE_PRAGMA_journal_mode=WAL
-      - SQLITE_USER=temporal
-      - SQLITE_PASSWORD=temporal
       - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
-      - ENABLE_ES=false
-      - ES_SEEDS=
-      - ES_VERSION=v7
       - DEFAULT_NAMESPACE=default
       - DEFAULT_NAMESPACE_RETENTION=168h
       - SKIP_DEFAULT_NAMESPACE_CREATION=false
     ports:
       - '7233:7233'
     volumes:
-      - temporal_data:/etc/temporal/config/dynamicconfig
       - /app/data/temporal:/tmp/temporal
     networks:
       - app-network
     healthcheck:
-      test: ['CMD', 'tctl', '--address', 'temporal:7233', 'cluster', 'health']
+      test: ['CMD', 'temporal-server', '--help']
       interval: 30s
       timeout: 10s
       retries: 5
@@ -315,8 +309,6 @@ services:
       - app-network
 
 volumes:
-  temporal_data:
-    driver: local
 
 networks:
   app-network:
