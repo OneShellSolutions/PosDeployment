@@ -272,7 +272,7 @@ services:
         max-size: '10m'
         max-file: '3'
 
-  # Temporal using SQLite (lightweight, no additional DB needed) 
+  # Temporal using SQLite (lightweight, no additional DB needed)
   temporal:
     image: temporalio/auto-setup:1.24.2
     container_name: temporal
@@ -297,7 +297,7 @@ services:
       # Worker optimization
       - TEMPORAL_WORKER_BUILD_ID_SCAVENGER_ENABLED=true
     volumes:
-      - temporal_data:/tmp/temporal
+      - /app/data/repo/temporal:/tmp/temporal
     networks:
       - app-network
     deploy:
@@ -312,10 +312,9 @@ services:
       driver: 'json-file'
       options:
         max-size: '10m'
-        max-file: '3'
 
   temporal-web:
-    image: temporalio/web:1.18.0
+    image: temporalio/web:latest
     container_name: temporal-web
     ports:
       - '8088:8088'
