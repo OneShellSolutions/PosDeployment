@@ -272,7 +272,7 @@ services:
 
   # Temporal using SQLite (lightweight, no additional DB needed)
   temporal:
-    image: temporalio/temporalite:latest
+    image: ghcr.io/temporalio/temporalite:latest
     container_name: temporal
     command: [
         'start',
@@ -283,16 +283,16 @@ services:
         '--namespace',
         'default',
         '--retention',
-        '240h', # 10 days (10 * 24h)
+        '240h', # 10 days
         '--ui',
         '--log-format',
         'pretty',
       ]
     environment:
-      # Disable archival so data older than retention is deleted immediately
+      # Keep only recent data; no archival beyond retention.
       - TEMPORAL_HISTORY_ARCHIVAL_ENABLED=false
       - TEMPORAL_VISIBILITY_ARCHIVAL_ENABLED=false
-      # Not required for Temporalite, but harmless to keep:
+      # Optional tuning (safe to keep/remove)
       - TEMPORAL_FRONTEND_HISTORY_MAX_PAGE_SIZE=100
       - TEMPORAL_MATCHING_NUM_TASK_QUEUE_PARTITIONS=4
       - TEMPORAL_HISTORY_MAX_AUTO_RESET_POINTS=5
